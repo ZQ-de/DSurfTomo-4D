@@ -1,0 +1,26 @@
+CMD = DSurfTomo-4D
+FC = gfortran
+# 关键： 查越界，-g -fbacktrace 查行号，去掉 -fopenmp 排除多线程干扰
+FFLAGS = -O0 -g -fbacktrace  -ffixed-line-length-none -m64 -fallow-argument-mismatch -fallow-invalid-boz -w -std=legacy -finit-local-zero -fno-implicit-none
+F90SRCS = lsmrDataModule.f90 lsmrblasInterface.f90 lsmrblas.f90 lsmrModule.f90 delsph.f90 aprod.f90 gaussian.f90 getpercentile.f90
+FSRCS = surfdisp96.f slarnv.f slaruv.f
+OBJS = $(F90SRCS:%.f90=%.o) $(FSRCS:%.f=%.o) CalSurfG.o main.o
+MODDIR = ./modules
+FFLAGS += -J$(MODDIR) -I$(MODDIR)
+
+all: $(MODDIR) $(CMD)
+
+$(MODDIR):
+	mkdir -p $(MODDIR)
+
+$(CMD): $(OBJS)
+	$(FC) $(FFLAGS) -o $@ $(OBJS)
+
+%.o: %.f90
+	$(FC) $(FFLAGS) -ffree-form -c $< -o $@
+
+%.o: %.f
+	$(FC) $(FFLAGS) -c $< -o $@
+
+clean:
+	rm -rf *.o $(CMD) $(MODDIR) *.mod
